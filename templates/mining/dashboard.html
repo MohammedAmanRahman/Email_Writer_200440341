@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="fw-bold mb-0">
+        <i class="bi bi-bar-chart me-2"></i>Complaint Analytics Dashboard
+    </h1>
+    <button class="btn btn-outline-primary btn-sm" id="refreshBtn" title="Refresh data">
+        <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+    </button>
+</div>
+
+<!-- Loading Spinner -->
+<div id="loadingSpinner" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="text-muted mt-3">Loading dashboard data...</p>
+</div>
+
+<!-- Dashboard Content (hidden until data loads) -->
+<div id="dashboardContent" style="display: none;">
+
+    <!-- Stat Cards Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card stat-card-primary">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="stat-label mb-1">Total Complaints</p>
+                        <h3 class="stat-value mb-0" id="statTotalComplaints">0</h3>
+                    </div>
+                    <i class="bi bi-envelope-paper display-6 text-primary opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card stat-card-info">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="stat-label mb-1">Average Sentiment</p>
+                        <h3 class="stat-value mb-0" id="statAvgSentiment">&mdash;</h3>
+                    </div>
+                    <i class="bi bi-emoji-neutral display-6 text-info opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card stat-card-warning">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="stat-label mb-1">Most Common Category</p>
+                        <h3 class="stat-value mb-0 fs-5" id="statTopCategory">&mdash;</h3>
+                    </div>
+                    <i class="bi bi-tag display-6 text-warning opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card stat-card-success">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="stat-label mb-1">Resolution Rate</p>
+                        <h3 class="stat-value mb-0" id="statResolutionRate">&mdash;</h3>
+                    </div>
+                    <i class="bi bi-check-circle display-6 text-success opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1: Category & Sentiment -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-3">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="bi bi-pie-chart me-2 text-primary"></i>Category Distribution
+                    </h5>
+                </div>
+                <div class="card-body chart-container">
+                    <canvas id="categoryChart"></canvas>
+                    <div class="chart-empty-state" id="categoryEmpty" style="display: none;">
+                        <i class="bi bi-inbox display-4 text-muted"></i>
+                        <p class="text-muted mt-2">No data available</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-3">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="bi bi-emoji-smile me-2 text-info"></i>Sentiment Distribution
+                    </h5>
+                </div>
+                <div class="card-body chart-container">
+                    <canvas id="sentimentChart"></canvas>
+                    <div class="chart-empty-state" id="sentimentEmpty" style="display: none;">
+                        <i class="bi bi-inbox display-4 text-muted"></i>
+                        <p class="text-muted mt-2">No data available</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2: Monthly Trends & Urgency -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-3">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="bi bi-graph-up me-2 text-success"></i>Monthly Trends
+                    </h5>
+                </div>
+                <div class="card-body chart-container">
+                    <canvas id="trendsChart"></canvas>
+                    <div class="chart-empty-state" id="trendsEmpty" style="display: none;">
+                        <i class="bi bi-inbox display-4 text-muted"></i>
+                        <p class="text-muted mt-2">No data available</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white border-0 pt-3">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="bi bi-exclamation-triangle me-2 text-danger"></i>Urgency Levels
+                    </h5>
+                </div>
+                <div class="card-body chart-container">
+                    <canvas id="urgencyChart"></canvas>
+                    <div class="chart-empty-state" id="urgencyEmpty" style="display: none;">
+                        <i class="bi bi-inbox display-4 text-muted"></i>
+                        <p class="text-muted mt-2">No data available</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 3: Top Companies -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pt-3">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="bi bi-building me-2 text-secondary"></i>Top Companies by Complaints
+                    </h5>
+                </div>
+                <div class="card-body chart-container-wide">
+                    <canvas id="companyChart"></canvas>
+                    <div class="chart-empty-state" id="companyEmpty" style="display: none;">
+                        <i class="bi bi-inbox display-4 text-muted"></i>
+                        <p class="text-muted mt-2">No data available</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyword Cloud -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-0 pt-3">
+                    <h5 class="card-title fw-bold mb-0">
+                        <i class="bi bi-chat-square-text me-2 text-primary"></i>Top Keywords
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="keyword-cloud text-center" id="keywordCloud">
+                        <p class="text-muted" id="keywordEmpty">No keywords available</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>const DASHBOARD_API_URL = "{% url 'mining:dashboard_api' %}";</script>
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock %}

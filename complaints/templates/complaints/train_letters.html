@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Train AI - Example Letters{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+
+    <h2 class="mb-2"><i class="bi bi-mortarboard me-2"></i>Train AI with Example Letters</h2>
+    <p class="text-muted mb-4">
+      Paste real complaint letters below. The system will automatically extract the company type,
+      issue type, and keywords, then use these letters as templates when generating future complaints.
+    </p>
+
+    <!-- Submit form -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Add an Example Letter</h5>
+      </div>
+      <div class="card-body">
+        <form method="post">
+          {% csrf_token %}
+
+          {% if form.errors %}
+          <div class="alert alert-danger">
+            {% for error in form.non_field_errors %}
+              <p class="mb-0">{{ error }}</p>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label for="id_product" class="form-label fw-semibold">Product / Service</label>
+            {{ form.product }}
+            <small class="form-text text-muted">{{ form.product.help_text }}</small>
+          </div>
+
+          <div class="mb-3" id="customProductGroup" style="display:none;">
+            <label for="id_custom_product" class="form-label fw-semibold">Custom Product / Service</label>
+            {{ form.custom_product }}
+            <small class="form-text text-muted">{{ form.custom_product.help_text }}</small>
+          </div>
+
+          <div class="mb-3">
+            <label for="id_company_name" class="form-label fw-semibold">Company Name</label>
+            {{ form.company_name }}
+            <small class="form-text text-muted">{{ form.company_name.help_text }}</small>
+          </div>
+
+          <div class="mb-3">
+            <label for="id_letter_text" class="form-label fw-semibold">Complaint Letter</label>
+            {{ form.letter_text }}
+            <small class="form-text text-muted">{{ form.letter_text.help_text }}</small>
+          </div>
+
+          <div class="alert alert-info small">
+            <i class="bi bi-info-circle me-1"></i>
+            <strong>What happens when you submit:</strong>
+            <ul class="mb-0 mt-1">
+              <li>The system detects the <strong>company name</strong> and <strong>product type</strong> using NER</li>
+              <li>It identifies the <strong>issue type</strong> (e.g. billing dispute, service outage)</li>
+              <li>It extracts the top <strong>keywords</strong> for future matching</li>
+              <li>Company and product names are converted to <strong>placeholders</strong> so the letter can be reused for other companies</li>
+            </ul>
+          </div>
+
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-cpu me-1"></i>Extract &amp; Save
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Existing example letters -->
+    <div class="card shadow-sm">
+      <div class="card-header bg-white">
+        <h5 class="mb-0"><i class="bi bi-collection me-2"></i>Saved Example Letters ({{ examples|length }})</h5>
+      </div>
+      <div class="card-body">
+        {% if examples %}
+        <div class="accordion" id="exampleAccordion">
+          {% for ex in examples %}
+          <div class="accordion-item">
+            <h2 class="accordion-header">
+              <button class="accordion-button collapsed" type="button"
+                      data-bs-toggle="collapse" data-bs-target="#ex{{ ex.pk }}">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <span class="badge bg-primary">{{ ex.category.name }}</span>
+                  <span class="badge bg-info">{{ ex.company_type }}</span>
+                  <span class="badge bg-warning text-dark">{{ ex.issue_type }}</span>
+                  <small class="text-muted">Added {{ ex.created_at|date:"d M Y" }}</small>
+                </div>
+              </button>
+            </h2>
+            <div id="ex{{ ex.pk }}" class="accordion-collapse collapse" data-bs-parent="#exampleAccordion">
+              <div class="accordion-body">
+                <div class="mb-3">
+                  <strong>Keywords:</strong>
+                  {% for kw in ex.keyword_list %}
+                    <span class="badge bg-light text-dark border me-1">{{ kw }}</span>
+                  {% endfor %}
+                </div>
+                <div class="mb-3">
+                  <strong>Source:</strong> {{ ex.source|default:"Not specified" }}
+                </div>
+                <div class="border rounded p-3 bg-light">
+                  <pre class="mb-0" style="white-space: pre-wrap; font-family: inherit;">{{ ex.letter_body }}</pre>
+                </div>
+                <form method="post" action="{% url 'complaints:delete_example' ex.pk %}"
+                      class="mt-2"
+                      onsubmit="return confirm('Delete this example letter?');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash me-1"></i>Delete
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-4">
+          <i class="bi bi-inbox display-4"></i>
+          <p class="mt-2">No example letters yet. Paste one above to get started.</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const productSelect = document.getElementById('id_product');
+  const customGroup = document.getElementById('customProductGroup');
+  function toggleCustom() {
+    customGroup.style.display = productSelect.value === 'Other' ? 'block' : 'none';
+  }
+  productSelect.addEventListener('change', toggleCustom);
+  toggleCustom();
+</script>
+{% endblock %}

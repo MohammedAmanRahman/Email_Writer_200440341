@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Complaint History{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Complaint History</h2>
+  <a href="{% url 'complaints:submit' %}" class="btn btn-primary">Submit New Complaint</a>
+</div>
+
+{% if complaints %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>#</th>
+        <th>Date</th>
+        <th>Category</th>
+        <th>Sentiment</th>
+        <th>Urgency</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in complaints %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ c.created_at|date:"d M Y" }}</td>
+        <td>{{ c.predicted_category.name|default:"--" }}</td>
+        <td>
+          {% if c.sentiment_label == "positive" %}
+            <span class="badge bg-success">Positive</span>
+          {% elif c.sentiment_label == "negative" %}
+            <span class="badge bg-danger">Negative</span>
+          {% elif c.sentiment_label == "neutral" %}
+            <span class="badge bg-secondary">Neutral</span>
+          {% else %}
+            --
+          {% endif %}
+        </td>
+        <td>
+          {% if c.urgency_level == "critical" %}
+            <span class="badge bg-danger">Critical</span>
+          {% elif c.urgency_level == "high" %}
+            <span class="badge bg-warning text-dark">High</span>
+          {% elif c.urgency_level == "medium" %}
+            <span class="badge bg-info">Medium</span>
+          {% elif c.urgency_level == "low" %}
+            <span class="badge bg-success">Low</span>
+          {% else %}
+            --
+          {% endif %}
+        </td>
+        <td class="d-flex gap-1">
+          <a href="{% url 'complaints:detail' c.pk %}" class="btn btn-sm btn-outline-primary">
+            View
+          </a>
+          <form method="post" action="{% url 'complaints:delete' c.pk %}"
+                onsubmit="return confirm('Are you sure you want to delete this complaint?');">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="alert alert-info">
+  You have not submitted any complaints yet.
+  <a href="{% url 'complaints:submit' %}" class="alert-link">Submit your first complaint</a>.
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Complaint #{{ complaint.pk }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2>Complaint #{{ complaint.pk }}</h2>
+      <span class="text-muted">{{ complaint.created_at|date:"d M Y, H:i" }}</span>
+    </div>
+
+    <!-- Complaint text -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header fw-semibold">Complaint Text</div>
+      <div class="card-body">
+        <p class="mb-0">{{ complaint.raw_text|linebreaksbr }}</p>
+      </div>
+    </div>
+
+    <!-- Analysis results row -->
+    <div class="row g-3 mb-4">
+
+      <!-- Category -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body text-center">
+            <h6 class="card-subtitle text-muted mb-2">Category</h6>
+            {% if complaint.predicted_category %}
+              <p class="fs-5 fw-semibold mb-1">{{ complaint.predicted_category.name }}</p>
+              {% if complaint.category_confidence is not None %}
+                <span class="badge bg-info">
+                  {{ complaint.category_confidence|floatformat:0 }}% confidence
+                </span>
+              {% endif %}
+            {% else %}
+              <p class="text-muted mb-0">Not classified</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Sentiment -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body text-center">
+            <h6 class="card-subtitle text-muted mb-2">Sentiment</h6>
+            {% if complaint.sentiment_label %}
+              <p class="fs-5 mb-1">
+                {% if complaint.sentiment_label == "positive" %}
+                  <span class="badge bg-success">Positive</span>
+                {% elif complaint.sentiment_label == "negative" %}
+                  <span class="badge bg-danger">Negative</span>
+                {% else %}
+                  <span class="badge bg-secondary">Neutral</span>
+                {% endif %}
+              </p>
+              {% if complaint.sentiment_score is not None %}
+                <small class="text-muted">Score: {{ complaint.sentiment_score|floatformat:2 }}</small>
+              {% endif %}
+            {% else %}
+              <p class="text-muted mb-0">Not analysed</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Urgency -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body text-center">
+            <h6 class="card-subtitle text-muted mb-2">Urgency</h6>
+            {% if complaint.urgency_level %}
+              <p class="fs-5 mb-0">
+                {% if complaint.urgency_level == "critical" %}
+                  <span class="badge bg-danger">Critical</span>
+                {% elif complaint.urgency_level == "high" %}
+                  <span class="badge bg-warning text-dark">High</span>
+                {% elif complaint.urgency_level == "medium" %}
+                  <span class="badge bg-info">Medium</span>
+                {% else %}
+                  <span class="badge bg-success">Low</span>
+                {% endif %}
+              </p>
+            {% else %}
+              <p class="text-muted mb-0">Not assessed</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Extracted Entities -->
+      <div class="col-md-6 col-lg-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <h6 class="card-subtitle text-muted mb-2 text-center">Entities</h6>
+            <ul class="list-unstyled mb-0 small">
+              <li><strong>Company:</strong> {{ complaint.company_name|default:"--" }}</li>
+              <li><strong>Product:</strong> {{ complaint.product|default:"--" }}</li>
+              <li><strong>Timeframe:</strong> {{ complaint.timeframe|default:"--" }}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Matched Strategy -->
+    {% if complaint.matched_strategy %}
+    <div class="card shadow-sm mb-4">
+      <div class="card-header fw-semibold">Recommended Strategy</div>
+      <div class="card-body">
+        <h5>{{ complaint.matched_strategy.title }}</h5>
+        <p>{{ complaint.matched_strategy.strategy_text|linebreaksbr }}</p>
+        <span class="badge bg-primary">
+          Success rate: {{ complaint.matched_strategy.success_rate|floatformat:0 }}%
+        </span>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="d-flex gap-2 flex-wrap mb-4">
+      <a href="{% url 'complaints:generate_letter' complaint.pk %}" class="btn btn-primary">
+        <i class="bi bi-file-earmark-pdf me-1"></i>
+        {% if complaint.letter_generated %}Regenerate Letter{% else %}Generate Complaint Letter{% endif %}
+      </a>
+      <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#similarStyleForm">
+        <i class="bi bi-arrow-repeat me-1"></i>Similar to this style
+      </button>
+      {% if complaint.letter_file %}
+      <a href="{{ complaint.letter_file.url }}" class="btn btn-outline-success" target="_blank">
+        <i class="bi bi-download me-1"></i>Download Saved Letter
+      </a>
+      {% endif %}
+      <a href="{% url 'complaints:history' %}" class="btn btn-outline-secondary">
+        Back to History
+      </a>
+      <form method="post" action="{% url 'complaints:delete' complaint.pk %}"
+            onsubmit="return confirm('Are you sure you want to delete this complaint?');"
+            class="ms-auto">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-outline-danger">
+          <i class="bi bi-trash me-1"></i>Delete
+        </button>
+      </form>
+    </div>
+
+    <!-- Similar style form (collapsed, expands when button clicked) -->
+    <div class="collapse mb-4" id="similarStyleForm">
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <p class="text-muted mb-3">Paste a new complaint and generate a letter in the same style.</p>
+          <form method="post" action="{% url 'complaints:similar_style' complaint.pk %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <textarea name="new_complaint" class="form-control" rows="4"
+                        placeholder="Paste or type your new complaint here..."></textarea>
+            </div>
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <input type="text" name="new_company" class="form-control"
+                       placeholder="Company name (optional)">
+              </div>
+              <div class="col-md-6">
+                <input type="text" name="new_product" class="form-control"
+                       placeholder="Product/service (optional)">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-magic me-1"></i>Analyse &amp; Generate
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

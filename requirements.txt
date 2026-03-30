@@ -1,0 +1,29 @@
+# Django & Web
+Django>=5.1,<6.0
+djangorestframework>=3.15,<4.0
+django-cors-headers>=4.3,<5.0
+
+# ML & NLP
+torch>=2.2,<3.0
+scikit-learn>=1.4,<2.0
+spacy>=3.7,<4.0
+nltk>=3.8,<4.0
+
+# Data
+pandas>=2.2,<3.0
+numpy>=1.26,<3.0
+
+# Data Mining
+mlxtend>=0.23,<1.0
+
+# PDF Generation
+reportlab>=4.1,<5.0
+
+# Security & Encryption
+cryptography>=42.0,<44.0
+
+# Environment
+python-decouple>=3.8,<4.0
+
+# Visualization (server-side)
+matplotlib>=3.8,<4.0

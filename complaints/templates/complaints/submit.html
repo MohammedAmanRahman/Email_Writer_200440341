@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Submit a Complaint{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="card-title mb-3">Submit a Complaint</h2>
+        <p class="text-muted mb-4">
+          Describe your complaint below. Our system will automatically analyse your
+          text using machine learning to classify the issue, detect sentiment, assess
+          urgency, and recommend a resolution strategy with a ready-made complaint
+          letter.
+        </p>
+
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label for="{{ form.raw_text.id_for_label }}" class="form-label fw-semibold">
+              Complaint Details
+            </label>
+            {{ form.raw_text }}
+            {% if form.raw_text.errors %}
+              <div class="invalid-feedback d-block">
+                {% for error in form.raw_text.errors %}{{ error }}{% endfor %}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.company_name.id_for_label }}" class="form-label fw-semibold">
+                Company Name
+              </label>
+              {{ form.company_name }}
+              {% if form.company_name.errors %}
+                <div class="invalid-feedback d-block">
+                  {% for error in form.company_name.errors %}{{ error }}{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="{{ form.product.id_for_label }}" class="form-label fw-semibold">
+                Product / Service
+              </label>
+              {{ form.product }}
+              {% if form.product.errors %}
+                <div class="invalid-feedback d-block">
+                  {% for error in form.product.errors %}{{ error }}{% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="mb-3" id="customProductGroup" style="display:none;">
+            <label for="{{ form.custom_product.id_for_label }}" class="form-label fw-semibold">
+              Custom Product / Service
+            </label>
+            {{ form.custom_product }}
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg w-100">
+            Analyse &amp; Submit
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const productSelect = document.getElementById('id_product');
+  const customGroup = document.getElementById('customProductGroup');
+  function toggleCustom() {
+    customGroup.style.display = productSelect.value === 'Other' ? 'block' : 'none';
+  }
+  productSelect.addEventListener('change', toggleCustom);
+  toggleCustom();
+</script>
+{% endblock %}
