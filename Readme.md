@@ -1,3 +1,6 @@
+Can download data to put into ...\data\ from:
+https://www.consumerfinance.gov/data-research/consumer-complaints/#get-the-data
+
 # Consumer Complaint Assistant - Technical Report
 
 ## Table of Contents
